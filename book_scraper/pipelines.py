@@ -11,9 +11,9 @@ class MongoDBPipeline:
     @classmethod
     def from_crawler(cls, crawler):
         return cls(
-            mongo_uri=crawler.settings.get('MONGO_URI'),
-            mongo_db=crawler.settings.get('MONGO_DATABASE', 'items'),
-            mongo_collection=crawler.settings.get('MONGO_COLLECTION', 'scraped_books')
+            mongo_uri=crawler.settings.get('MONGODB_URI'),
+            mongo_db=crawler.settings.get('MONGODB_DATABASE'),
+            mongo_collection=crawler.settings.get('MONGODB_COLLECTION')
         )
 
     def open_spider(self, spider):

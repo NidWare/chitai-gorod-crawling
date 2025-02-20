@@ -16,10 +16,15 @@ MONGO_URI = getenv('MONGO_URI', 'mongodb://localhost:27017/')
 MONGO_DATABASE = getenv('MONGO_DATABASE', 'items')
 MONGO_COLLECTION = getenv('MONGO_DATABASE_COLLECTION', 'scraped_books')
 
-# Включаем pipeline
+# Configure item pipelines
 ITEM_PIPELINES = {
-   'book_scraper.pipelines.MongoDBPipeline': 300,
+    # 'book_scraper.pipelines.MongoDBPipeline': 300,  # Comment this line
 }
+
+# MongoDB settings
+MONGODB_URI = 'mongodb://localhost:27017'
+MONGODB_DATABASE = 'books_db'
+MONGODB_COLLECTION = 'books'
 
 # Настройки задержек между запросами
 DOWNLOAD_DELAY = 1.0
