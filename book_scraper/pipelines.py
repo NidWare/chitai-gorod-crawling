@@ -1,12 +1,15 @@
 import pymongo
 from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
+import logging
 
 class MongoDBPipeline:
     def __init__(self, mongo_uri, mongo_db, mongo_collection):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.mongo_collection = mongo_collection
+        self.client = None
+        self.db = None
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -17,21 +20,39 @@ class MongoDBPipeline:
         )
 
     def open_spider(self, spider):
-        self.client = pymongo.MongoClient(self.mongo_uri)
-        self.db = self.client[self.mongo_db]
+        try:
+            self.client = pymongo.MongoClient(self.mongo_uri)
+            self.db = self.client[self.mongo_db]
+            logging.info(f"Successfully connected to MongoDB at {self.mongo_uri}")
+        except Exception as e:
+            logging.error(f"Failed to connect to MongoDB: {str(e)}")
+            raise
 
     def close_spider(self, spider):
-        self.client.close()
+        if self.client:
+            self.client.close()
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         
-        # Проверяем обязательные поля
-        required_fields = ['title', 'publication_year', 'isbn', 'pages_cnt', 'source_url']
-        for field in required_fields:
-            if not adapter.get(field):
-                raise DropItem(f"Missing required field {field}")
+        # Print item for debugging
+        logging.info(f"Processing item: {adapter.asdict()}")
         
-        # Сохраняем в MongoDB
-        self.db[self.mongo_collection].insert_one(adapter.asdict())
-        return item 
+        try:
+            # Check required fields
+            required_fields = ['title', 'publication_year', 'isbn', 'pages_cnt', 'source_url']
+            missing_fields = [field for field in required_fields if not adapter.get(field)]
+            
+            if missing_fields:
+                raise DropItem(f"Missing required fields: {missing_fields}")
+            
+            # Save to MongoDB
+            self.db[self.mongo_collection].insert_one(adapter.asdict())
+            logging.info(f"Successfully saved item with ISBN {adapter.get('isbn')} to MongoDB")
+            
+            return item
+            
+        except Exception as e:
+            logging.error(f"Error processing item: {str(e)}")
+            raise DropItem(f"Failed to process item: {str(e)}") 
+    
